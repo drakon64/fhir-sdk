@@ -1,0 +1,37 @@
+name: CI
+
+on:
+#  push:
+#    branches:
+#      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        tests:
+          - flake: 1
+            name: 1 codegen unit (Nixpkgs)
+          - flake: 1-nightly
+            name: 1 codegen unit (Nightly)
+          - flake: 10
+            name: 10 codegen units (Nixpkgs)
+          - flake: 10-nightly
+            name: 10 codegen units (Nightly)
+          - flake: 16
+            name: 16 codegen units (Nixpkgs)
+          - flake: 16-nightly
+            name: 16 codegen units (Nightly)
+
+    name: Build - ${{ matrix.tests.name }}
+    runs-on: [ linux, ARM64, drakon64/github-actions-runner-aws, EC2-c8g.4xlarge, EBS-1GB-Swap ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v14
+
+      - env:
+          FLAKE: ${{ matrix.tests.flake }}
+        run: nix --cores 1 --max-jobs 1 run .#codegenunits-${FLAKE}
